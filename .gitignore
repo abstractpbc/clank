@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+runs/
+/tests/
+clank/metal/workcells/*
+!clank/metal/workcells/__init__.py
+.DS_Store
+dist/
+build/
+*.egg-info/
