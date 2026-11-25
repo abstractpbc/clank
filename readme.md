@@ -10,3 +10,13 @@ arm; clank blends it, solves it into joints while working inside the workcell's 
 Ask claude for help
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=abstractpbc%2Fclank&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=abstractpbc/clank&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=abstractpbc/clank&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=abstractpbc/clank&type=date&legend=top-left" />
+ </picture>
+</a>
