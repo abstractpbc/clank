@@ -1,12 +1,4 @@
-"""The agent loop: a language model in clank's Policy slot.
-
-One turn per infer(). The model is shown the cameras and where each arm's tool is, calls primitives
-(`primitives.py`), and each arm's move becomes a pose chunk: a straight line from where the arm is to the target,
-then a hold. While the arms are moving, infer() says the model is not ready, so the next turn starts from arms that
-have stopped and shows the model what its last calls did.
-
-Arms named in the same turn move together. Each arm takes one move a turn.
-"""
+"""The agent loop: one model turn per infer(), each arm's move a straight-line pose chunk then a hold."""
 
 import dataclasses
 import threading
@@ -39,12 +31,7 @@ SETTLE_S = 0.25
 
 class NervePolicy:
     def __init__(self, config: Mapping[str, Any], llm: LLM, primitives: Sequence[Primitive] = PRIMITIVES) -> None:
-        """
-        config: `{"think_s": ...}`: how long the arms hold their last target waiting for the model's next turn,
-            seconds. It has to cover the model's slowest answer: clank stops a run whose plan runs out.
-        llm: the language model.
-        primitives: what the model may call.
-        """
+        """config holds think_s, how long arms hold for the next turn; llm is the model; primitives what it may call."""
         self._think_s = float(config["think_s"])
         if not self._think_s > 0:
             raise ValueError(f"think_s must be positive, got {self._think_s}")

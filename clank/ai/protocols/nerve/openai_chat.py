@@ -1,5 +1,4 @@
-"""The wire for a service that speaks OpenAI's chat-completions format: `POST <base_url>/chat/completions`, with
-images as data URLs and primitives as function tools. Many services other than OpenAI accept this format."""
+"""The wire for services speaking OpenAI's chat-completions format, images as data URLs."""
 
 import base64
 import json
@@ -15,13 +14,7 @@ from clank.ai.protocols.nerve.llm import Call, Tool, Turn
 
 class OpenAIChat:
     def __init__(self, config: Mapping[str, Any]) -> None:
-        """
-        config:
-            base_url: the service's API root, e.g. `https://api.openai.com/v1`.
-            model: the model's name at that service.
-            api_key_env: the environment variable holding the key.
-            timeout_s: how long one answer may take.
-        """
+        """config holds base_url, model, api_key_env and timeout_s."""
         self._url = f"{str(config['base_url']).rstrip('/')}/chat/completions"
         self._model = str(config["model"])
         self._timeout_s = float(config["timeout_s"])

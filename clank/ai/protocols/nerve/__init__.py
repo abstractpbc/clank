@@ -1,25 +1,4 @@
-"""nerve: a language model driving arms through a small vocabulary of moves.
-
-Three parts, each replaceable on its own:
-
-- `primitives.py`: the vocabulary. Each primitive is one function from where the arms are to where they should go.
-- `agent.py`: the loop. One model turn per chunk: show the model the scene, run the primitives it calls, hand clank
-  the moves.
-- a wire file per kind of service (`openai_chat.py`, `openai_responses.py`, `anthropic_messages.py`): how the
-  conversation reaches a model.
-
-A provider file names one of the functions below as its protocol, with the service's address, key and model in each
-model's config:
-
-    provider = Provider(
-        id="...",
-        name="...",
-        protocol=nerve.openai_chat,
-        models=(
-            Model(id="...", config={"base_url": "...", "model": "...", "api_key_env": "...", "timeout_s": 60, "think_s": 90}),
-        ),
-    )
-"""
+"""nerve: a language model driving arms through primitives, an agent loop, and one wire file per service."""
 
 from collections.abc import Mapping
 from typing import Any

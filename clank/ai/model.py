@@ -9,12 +9,7 @@ from clank.ai.policy import Policy
 
 @dataclass(frozen=True)
 class Model:
-    """One model a provider serves.
-
-    id: the model's name within its provider: the part after the slash in `"<provider id>/<model id>"`.
-    config: what the provider's protocol needs to open this model, in that protocol's own terms.
-    blend_s: how long each new chunk takes to fade in from the plan in force, seconds; None for the run's own.
-    """
+    """One model a provider serves: its id, its protocol config, and its blend_s (None for the run's own)."""
 
     id: str
     config: Mapping[str, Any]
@@ -23,14 +18,7 @@ class Model:
 
 @dataclass(frozen=True)
 class Provider:
-    """A service that hosts models.
-
-    id: the provider's name, which is also its file's: `clank/ai/providers/<id>.py`.
-    name: what to call the provider in a message to a person.
-    protocol: the code that speaks to the provider: called with one model's `config`, it opens that model and
-        returns it as a Policy.
-    models: the models the provider serves.
-    """
+    """A service that hosts models: its id (its file's name), display name, protocol, and models."""
 
     id: str
     name: str

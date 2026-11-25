@@ -1,11 +1,4 @@
-"""The wire for OpenAI's Responses API: `POST <base_url>/responses`, with images as data URLs, primitives as function
-tools, and the service tier asked for on every request. Ultrafast is offered here and not on chat completions.
-
-Nothing is stored at OpenAI (`store` is false): the whole conversation goes out each turn, as the loop keeps it. A
-reasoning model's reasoning must go back with the results of the calls it made, so each answer's reasoning items
-(their encrypted content included) are kept here, by the first call they led to, and sent back in front of those
-calls. Reasoning that led to no call is not sent back.
-"""
+"""The wire for OpenAI's Responses API: nothing stored, reasoning resent before the calls it led to."""
 
 import base64
 import json
@@ -21,14 +14,7 @@ from clank.ai.protocols.nerve.llm import Call, Tool, Turn
 
 class OpenAIResponses:
     def __init__(self, config: Mapping[str, Any]) -> None:
-        """
-        config:
-            base_url: the API root, `https://api.openai.com/v1`.
-            model: the model's name at OpenAI.
-            api_key_env: the environment variable holding the key.
-            timeout_s: how long one answer may take.
-            service_tier: the tier to be served at, e.g. `ultrafast`.
-        """
+        """config holds base_url, model, api_key_env, timeout_s and service_tier."""
         self._url = f"{str(config['base_url']).rstrip('/')}/responses"
         self._model = str(config["model"])
         self._timeout_s = float(config["timeout_s"])

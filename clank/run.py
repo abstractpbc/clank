@@ -1,26 +1,4 @@
-"""A model driving a workcell: the model's pose chunks, clank's trajectory and IK, the arms.
-
-    python -m clank.run --policy <provider>/<model> --workcell <workcell> --prompt "..." --seconds 30 --max-wait-s 3600 --out runs/<name>
-
-The model is asked for a chunk once before any arm is powered, so one that is still starting is waited for with the
-arms off. The arms are then powered, held where they are until the first chunk arrives, driven by the model for
-`--seconds`, returned to rest and switched off. Ctrl-C ends the run early the same way; a second Ctrl-C during the
-return leaves the arms limp where they are. Each arm is held to its workcell's safety envelope
-(`clank/metal/safety/`): its tool target is kept inside its workspace and its joints under their speed limits, the
-return to rest included. Stand clear all the same, with the e-stop in reach.
-
-When the model's plan runs out before its next chunk comes, the arms hold the plan's last pose and the next chunk
-fades in from there. The run stops by itself, returning the arms to rest, when no chunk comes within `PLAN_GAP_S` of
-the plan running out, when chunks keep arriving too late to use for `PLAN_GAP_S` before any plan is in force, when an
-arm stops answering, when an arm stays far from where it was told to be, when the IK wants an arm far from where its
-speed limits let it be, or when a commanded tool strays outside its workspace.
-
-`--out` gets the run's log (`log.npz`, `stats.json`) and, in `video/`, each camera's video of the stretches in which
-the arms moved, with idle time cut out (`clank/recorder.py`).
-
-Nothing here names a provider or a robot: the model is whatever `--policy` names (`clank/ai/providers/`) and the
-station whatever `--workcell` names (`clank/metal/workcells/`).
-"""
+"""A model driving a workcell: `python -m clank.run --policy <provider>/<model> --workcell <workcell> ...`."""
 
 import argparse
 import contextlib
@@ -122,8 +100,7 @@ def observe(
     prompt: str,
     recorder: MotionRecorder | None = None,
 ) -> dict[str, JointState]:
-    """Hands the policy one camera tick with the arms' measured state and tool poses, and the recorder the frames;
-    returns that state."""
+    """Hands the policy one camera tick with the arms' states and tool poses, and returns those states."""
     frames = {role: camera.read() for role, camera in cameras.items()}
     states = {side: arm.read() for side, arm in arms.items()}
     poses = {side: kinematics[side].fk(state.q) for side, state in states.items()}
@@ -142,9 +119,7 @@ def warm_up(
     prompt: str,
     max_wait_s: float,
 ) -> None:
-    """Asks the model for one chunk before any arm is powered, so a model that is still starting is waited for with
-    the arms off. The joints are read without powering them, and the chunk is discarded. Each arm's tool must be
-    inside its workspace: no arm is powered otherwise."""
+    """Waits for the model's first chunk with every arm unpowered, and checks each tool is in its workspace."""
     arms = {side: arm.open_passive(workcell.rest_grip) for side, arm in workcell.arms.items()}
     stop = threading.Event()  # never set: nothing else is running to stop this
     try:
@@ -381,12 +356,7 @@ def drive(
 def infer(
     policy: Policy, stop: threading.Event, max_wait_s: float, refill: Callable[[], object] | None
 ) -> dict[str, PoseChunk] | None:
-    """Asks for a chunk, waiting and asking again for as long as the model says it is not ready.
-
-    refill: called repeatedly through the last `WINDOW_FILL_S` of each wait, to keep the model's observations fresh
-        when nothing else is feeding it; None when something else is.
-    Returns None when `stop` was set during a wait.
-    """
+    """Asks for a chunk until the model is ready, calling `refill` near the end of each wait; None on stop."""
     asked = time.monotonic()
     while True:
         try:
@@ -408,8 +378,7 @@ def infer(
 
 
 def park(workcell: Workcell, robots: Mapping[str, Robot]) -> None:
-    """Returns every arm to rest, in a straight line in joint space, and holds a moment. It takes `PARK_S`, or longer
-    where an arm's speed limits need it: the arms set off and arrive together."""
+    """Returns every arm to rest along a joint-space line, together, within each arm's speed limits."""
     start = {side: robot.read() for side, robot in robots.items()}
     rest = {side: np.array(workcell.arms[side].rest_q) for side in robots}
     park_s = max([PARK_S, *(workcell.arms[side].safety.travel_s(start[side].q, rest[side]) for side in robots)])

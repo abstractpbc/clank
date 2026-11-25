@@ -1,9 +1,4 @@
-"""Fake: recorded runs played back as models. No service, no key, no model call.
-
-Each live run under `runs/` that saved a `log.npz` is a model, named after its directory: `fake/live-b` plays
-`runs/live-b/log.npz`. `runs/` is looked for in the working directory, where the run scripts write it, once, when this
-file is first imported.
-"""
+"""Fake: each `runs/<name>/log.npz` in the working directory played back as the model `fake/<name>`."""
 
 from pathlib import Path
 

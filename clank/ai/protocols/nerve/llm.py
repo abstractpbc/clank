@@ -1,5 +1,4 @@
-"""What the agent loop needs from a language model: the conversation and the tools go in, one assistant turn comes
-out. A wire file (`openai_chat.py`, `openai_responses.py`, `anthropic_messages.py`) does that for one kind of service; the loop never sees the service's format."""
+"""What the agent loop needs from a language model: conversation and tools in, one assistant turn out."""
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -8,10 +7,7 @@ from typing import Any, Literal, Protocol
 
 @dataclass(frozen=True)
 class Tool:
-    """Something the model may call.
-
-    parameters: the JSON Schema of the call's arguments object.
-    """
+    """Something the model may call; `parameters` is the JSON Schema of its arguments."""
 
     name: str
     description: str
@@ -29,15 +25,7 @@ class Call:
 
 @dataclass(frozen=True)
 class Turn:
-    """One entry of the conversation.
-
-    role: who is speaking. `system` sets the model up, `user` is an observation, `assistant` is the model, and
-        `tool` is the result of one of the model's calls.
-    text: the words.
-    images: JPEG images, on a `user` turn.
-    calls: the calls the model made, on an `assistant` turn.
-    call_id: the call a `tool` turn answers.
-    """
+    """One conversation entry: system, user (with images), assistant (with calls), or tool (with call_id)."""
 
     role: Literal["system", "user", "assistant", "tool"]
     text: str
@@ -48,10 +36,7 @@ class Turn:
 
 class LLM(Protocol):
     def reply(self, turns: Sequence[Turn], tools: Sequence[Tool]) -> Turn:
-        """The model's next turn (role `assistant`), given the conversation so far and what it may call.
-
-        Raises `clank.ai.PolicyNotReady` when the service says to come back later.
-        """
+        """The model's next assistant turn; PolicyNotReady when the service says to come back later."""
         ...
 
     def close(self) -> None: ...

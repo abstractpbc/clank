@@ -13,11 +13,7 @@ def declared_names(package: ModuleType) -> list[str]:
 
 
 def load_declared(package: ModuleType, name: str, attribute: str) -> Any:
-    """Imports `<package>.<name>` and returns its `attribute`, whose `id` must be `name`.
-
-    A module is imported only when it is asked for, so a missing module, or one whose libraries are not installed,
-    leaves every other declaration in the package usable.
-    """
+    """Imports `<package>.<name>` and returns its `attribute`, whose `id` must be `name`."""
     present = declared_names(package)
     if name not in present:
         raise LookupError(f"there is no {attribute} {name!r}; the {attribute}s in {package.__name__} are {present}")
@@ -28,11 +24,7 @@ def load_declared(package: ModuleType, name: str, attribute: str) -> Any:
 
 
 def load_installed(group: str, name: str, attribute: str) -> Any | None:
-    """The declaration an installed distribution registers under the entry-point `group` as `name`, or None when no
-    distribution does.
-
-    A package's own files come first, so a distribution can fill in what a checkout leaves out without shadowing it.
-    """
+    """The declaration an installed distribution registers under entry-point `group` as `name`, or None."""
     for entry in importlib.metadata.entry_points(group=group):
         if entry.name != name:
             continue

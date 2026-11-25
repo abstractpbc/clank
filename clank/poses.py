@@ -1,7 +1,4 @@
-"""Tool poses as the protocols send and receive them: rigid (4, 4) transforms, and rotation6d rows.
-
-rotation6d is a rotation matrix's first column followed by its second; the third is their cross product.
-"""
+"""Tool poses as rigid (4, 4) transforms and as rotation6d rows."""
 
 from typing import Any
 
@@ -38,8 +35,7 @@ def rot6d(T: npt.NDArray[np.float64]) -> list[float]:
 
 
 def from_rot6d(rows: npt.NDArray[np.float64], name: str) -> npt.NDArray[np.float64]:
-    """(N, 9) rows of xyz and rotation6d as (N, 4, 4) poses: the two columns made orthonormal (Gram-Schmidt), the
-    third their cross product. ValueError naming `name` for a column of no length or two parallel columns."""
+    """(N, 9) rows of xyz and rotation6d as (N, 4, 4) poses; ValueError for a degenerate rotation6d."""
     first, second = rows[:, 3:6], rows[:, 6:9]
     first_norm = np.linalg.norm(first, axis=1, keepdims=True)
     if not np.isfinite(first_norm).all() or np.any(first_norm < _DEGENERATE):

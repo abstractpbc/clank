@@ -7,9 +7,7 @@ import numpy.typing as npt
 def limit_step(
     previous: npt.NDArray[np.float64], wanted: npt.NDArray[np.float64], dt: float, limit: npt.NDArray[np.float64]
 ) -> tuple[npt.NDArray[np.float64], bool]:
-    """The joints after `previous` on the way to `wanted`: the whole step, shortened where needed so that no joint
-    goes further than its `limit` (rad/s) allows in `dt` seconds; and whether it was shortened. The step is shortened
-    as a whole, not joint by joint, so it keeps its direction and the tool still heads where it was going."""
+    """The step toward `wanted`, shortened as a whole to keep every joint under its limit, and whether it was."""
     step = wanted - previous
     over = float(np.max(np.abs(step) / (limit * dt)))
     if over <= 1.0:

@@ -1,9 +1,4 @@
-"""The slot a model plugs into: fed every camera tick, asked for a chunk when the trajectory needs one.
-
-Everything here is in clank's own terms, so the loop that drives a robot names no provider. A protocol turns these
-into what its service speaks: arms are keyed by side (`left`, `right`) and cameras by role (`overhead`, `wrist_left`,
-`wrist_right`).
-"""
+"""The slot a model plugs into, in clank's terms: arms keyed by side, cameras by role."""
 
 from collections.abc import Mapping
 from typing import Protocol
@@ -15,11 +10,7 @@ from clank.types import JointState, PoseChunk
 
 
 class PolicyNotReady(Exception):
-    """The model cannot answer yet, and asking again later may work: it is starting, busy, or took too long.
-
-    reason: why, in the service's words.
-    retry_after_s: how long to wait before asking again.
-    """
+    """The model cannot answer yet but may later: `reason` says why, `retry_after_s` when to ask again."""
 
     def __init__(self, reason: str, retry_after_s: float) -> None:
         super().__init__(f"{reason}; ask again in {retry_after_s:g} s")
@@ -36,22 +27,11 @@ class Policy(Protocol):
         prompt: str,
         t: float,
     ) -> None:
-        """Takes one camera tick.
-
-        frames: camera role -> (H, W, 3) BGR image.
-        states: side -> that arm's measured state.
-        poses: side -> where that arm's tool is, (4, 4) in the arm's own base frame: its joints through the workcell's
-            kinematics.
-        prompt: the task, in words.
-        t: when the frames were captured, seconds on the client's monotonic clock.
-        """
+        """Takes one camera tick: frames by role, arm states and tool poses by side, the prompt, capture time."""
         ...
 
     def infer(self) -> dict[str, PoseChunk]:
-        """Returns one chunk per arm, keyed by side, planned from the latest observation.
-
-        Raises PolicyNotReady when the model cannot answer yet. Any other error means asking again will not help.
-        """
+        """One chunk per side from the latest observation; PolicyNotReady when asking again later may help."""
         ...
 
     def reset_episode(self) -> None:
@@ -59,6 +39,5 @@ class Policy(Protocol):
         ...
 
     def close(self) -> None:
-        """Lets go of what the policy holds. observe(), infer() and reset_episode() raise RuntimeError from then on;
-        closing again does nothing."""
+        """Lets go of what the policy holds; later calls raise RuntimeError, and closing again does nothing."""
         ...

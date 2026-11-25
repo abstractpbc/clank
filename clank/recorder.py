@@ -1,18 +1,4 @@
-"""Camera video of a run, kept only while the robot moves: one H.264 MP4 per camera, idle time cut out.
-
-The control loop tells the recorder where the arms are (`note_arms`), and the camera loop hands it every frame
-(`offer`). A frame is kept while any arm is moving and for `HOLD_S` after it stops. An arm is moving once one of its
-joints is more than `MOVE_RAD` from where it last moved, or its gripper more than `MOVE_GRIP`: measured joints at
-rest jitter by about a thousandth of a radian, so reading noise never counts, while slow motion adds up until it does.
-
-The kept frames play back to back, so a video holds no idle time. Beside each video, `<role>_t.npy` holds each kept
-frame's capture time on the run's clock (the `t` of `log.npz`), so any frame can be matched to the joints at that
-moment, and `segments.json` lists the stretches of motion recorded.
-
-Encoding runs on a thread of its own, so it never holds up the camera loop or the control loop. Frames waiting for it
-are bounded: when the encoder falls behind, the newest frame is dropped and counted, and the count is reported.
-A failure to encode stops the run, through the next `offer`.
-"""
+"""Camera video kept only while the robot moves: one H.264 MP4 per camera, encoded on its own thread."""
 
 import json
 import queue
@@ -46,11 +32,7 @@ _NOMINAL_FPS = 15
 
 class MotionRecorder:
     def __init__(self, out: Path, roles: tuple[str, ...], started: float) -> None:
-        """
-        out: the directory to write `<role>.mp4`, `<role>_t.npy` and `segments.json` into; it must not exist yet.
-        roles: the camera roles that will be offered.
-        started: the run's start on the monotonic clock: capture times are saved relative to it, as `log.npz` is.
-        """
+        """out is a new directory for the videos, roles the camera roles, started the run's monotonic start."""
         out.mkdir(parents=True)
         self._out = out
         self._roles = roles
@@ -96,8 +78,7 @@ class MotionRecorder:
                 self._dropped[role] += 1
 
     def close(self) -> dict:
-        """Finishes the videos and returns what was recorded: frames kept and dropped per camera, and the stretches
-        of motion, as run times in seconds."""
+        """Finishes the videos and returns frames kept and dropped per camera and the stretches of motion."""
         self._queue.put(None)
         self._encoder.join()
         summary = {

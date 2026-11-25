@@ -1,9 +1,4 @@
-"""Sail Research (sailresearch.com): open-weight language models driving the arms through nerve's moves.
-
-`sail/<model id>` names a model by Sail's own id: `sail/moonshotai/Kimi-K3.1-Pro`. The key is read from
-`SAIL_API_KEY`. Only models that read images are here, since nerve shows the model every camera each turn, and only
-those Sail serves on its default ASAP tier, which answers without queueing.
-"""
+"""Sail Research: image-reading open-weight models through nerve, keyed by `SAIL_API_KEY`."""
 
 from clank.ai.model import Model, Provider
 from clank.ai.protocols import nerve

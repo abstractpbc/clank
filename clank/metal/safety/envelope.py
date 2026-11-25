@@ -11,11 +11,7 @@ from clank.metal.safety.workspace import Box
 
 @dataclass(frozen=True)
 class Envelope:
-    """
-    speed_limit: each joint's top commanded speed, rad/s, in the URDF's joint order: set well below what the motor can
-        do (`Arm.top_speed`), which the arm's workcell checks.
-    workspace: the box the tool is kept inside, in the arm's base frame; None to let it go wherever the joint limits do.
-    """
+    """Each joint's speed limit, rad/s, below its top speed; and the tool's workspace box, or None."""
 
     speed_limit: tuple[float, ...]
     workspace: Box | None
@@ -26,8 +22,7 @@ class Envelope:
             raise ValueError(f"speed_limit is one finite, positive speed per joint, not {self.speed_limit}")
 
     def require_inside(self, T_base_tcp: npt.NDArray[np.float64], what: str, slack_m: float = 0.0) -> None:
-        """Raises ValueError when the tool pose is further than `slack_m` outside the workspace. An arm must start
-        inside it: from outside, the first target moved into it is a jump the arm cannot make."""
+        """Raises ValueError when the tool is more than `slack_m` outside the workspace."""
         if self.workspace is None:
             return
         position = T_base_tcp[:3, 3]
@@ -48,8 +43,7 @@ class Envelope:
     def step(
         self, previous: npt.NDArray[np.float64], wanted: npt.NDArray[np.float64], dt: float
     ) -> tuple[npt.NDArray[np.float64], bool]:
-        """The joints after `previous`, `dt` seconds on, toward `wanted` within the speed limits; and whether the step
-        was shortened."""
+        """The joints `dt` after `previous` toward `wanted` within the limits, and whether the step was shortened."""
         return speed.limit_step(previous, wanted, dt, np.asarray(self.speed_limit))
 
     def travel_s(self, start: npt.NDArray[np.float64], end: npt.NDArray[np.float64]) -> float:

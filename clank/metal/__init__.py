@@ -1,11 +1,4 @@
-"""Hardware: everything that touches an arm, a motor or a camera. `load_workcell("<workcell id>")` returns a robot
-station.
-
-A driver (`clank/metal/drivers/`) is the code that talks to one kind of device, behind the Robot or Camera
-interface. A workcell (`clank/metal/workcells/<workcell id>.py`) is a declaration: one station's arms and cameras, each
-naming the driver that opens it, and each arm's safety envelope (`clank/metal/safety/`): the speed limits and workspace
-its commands are held to.
-"""
+"""Hardware: drivers, workcells and safety envelopes; `load_workcell("<workcell id>")` returns a station."""
 
 from clank.metal import workcells
 from clank.metal.camera import Camera
@@ -18,9 +11,5 @@ __all__ = ["Arm", "Box", "Camera", "Envelope", "Robot", "Workcell", "load_workce
 
 
 def load_workcell(workcell_id: str) -> Workcell:
-    """Imports `clank.metal.workcells.<workcell_id>` and returns the workcell it declares.
-
-    A workcell is imported only when it is asked for, and it opens nothing until one of its `open` functions is called,
-    so naming a workcell needs neither its hardware nor its drivers' libraries.
-    """
+    """The workcell `clank.metal.workcells.<workcell_id>` declares, imported only when asked for."""
     return load_declared(workcells, workcell_id, "workcell")

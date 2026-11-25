@@ -1,11 +1,4 @@
-"""The vocabulary a language model drives arms with: a few small moves, each one function.
-
-A primitive reads where each arm was last told to be and answers with where it should go next. It never touches
-hardware: the agent loop turns its moves into pose chunks, and clank's trajectory, IK and stop conditions carry them
-out. Adding a primitive is adding one entry to `PRIMITIVES`.
-
-Positions are metres in the arm's own base frame. Gripper apertures run from 0 (closed) to 1 (open).
-"""
+"""The moves a language model drives arms with, in metres in each arm's base frame, apertures 0 to 1."""
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -36,11 +29,7 @@ class Move:
 
 @dataclass(frozen=True)
 class Scene:
-    """What a primitive may read.
-
-    targets: side -> where that arm was last told to be.
-    home: side -> where that arm was when the episode began.
-    """
+    """What a primitive reads: where each arm was last told to be, and where it began the episode."""
 
     targets: Mapping[str, ArmTarget]
     home: Mapping[str, ArmTarget]
@@ -48,12 +37,7 @@ class Scene:
 
 @dataclass(frozen=True)
 class Outcome:
-    """What a primitive decided.
-
-    text: what to tell the model.
-    moves: side -> that arm's move; empty when nothing moves.
-    done: the model says the task is over.
-    """
+    """What a primitive decided: what to tell the model, each arm's move, and whether the task is done."""
 
     text: str
     moves: Mapping[str, Move] = field(default_factory=dict)

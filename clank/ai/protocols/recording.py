@@ -1,11 +1,4 @@
-"""The recording protocol: a model that is a recorded run, played back, with no service behind it.
-
-A live run saves every chunk its model answered, and when each arrived, in the run directory's `log.npz`. This plays
-those chunks back in order. Each infer() waits as long as the recorded answer took to come, then returns the recorded
-chunk, restamped to start at the observation it is now answering. Nothing is read from an observation but its time,
-so the plan is the recorded one whatever the arms are doing: an arm that starts where the recorded run started
-repeats that run's motion.
-"""
+"""A recorded run's chunks played back as a model, each after its recorded wait, restamped to now."""
 
 import time
 from collections.abc import Mapping

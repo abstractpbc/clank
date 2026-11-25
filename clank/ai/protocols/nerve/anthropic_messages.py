@@ -1,15 +1,4 @@
-"""The wire for Anthropic's Messages API, through Anthropic's own client library: images as base64 blocks,
-primitives as tools, and each call's result as a `tool_result` block.
-
-The Messages format differs from the conversation the loop keeps in three ways, each bridged here:
-
-- The system turn is the request's `system`, not a message.
-- A call's result is a block of a user message. The tool turns that follow an assistant turn, and the observation
-  after them, go out as one user message with the results first.
-- The model's thinking is not sent back. A `Turn` keeps a turn's words and calls only, and the loop takes the images
-  out of earlier observations on every request, which would void thinking blocks that are bound to the history they
-  were written in. The model reasons anew each turn, from the conversation's words, calls and results.
-"""
+"""The wire for Anthropic's Messages API: system as `system`, results as `tool_result`, thinking not resent."""
 
 import base64
 from collections.abc import Mapping, Sequence
@@ -22,17 +11,7 @@ _FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 class AnthropicMessages:
     def __init__(self, config: Mapping[str, Any]) -> None:
-        """
-        config:
-            model: the model's id at Anthropic.
-            timeout_s: how long one answer may take.
-            max_tokens: the most the model may write in one answer, its thinking included.
-            effort: how hard the model thinks: `low`, `medium`, `high`, `xhigh` or `max`.
-
-        The key is the one Anthropic's library finds: `ANTHROPIC_API_KEY`, or the profile `ant auth login` saved. A
-        missing one is raised by the first reply(), not here. The library is imported here, when a model is opened,
-        so that nerve's other wires need only their own.
-        """
+        """config holds model, timeout_s, max_tokens and effort; the key is the one Anthropic's library finds."""
         import anthropic
 
         self._sdk = anthropic
@@ -88,9 +67,7 @@ class AnthropicMessages:
 
 
 def _messages(turns: Sequence[Turn]) -> tuple[str, list[dict[str, Any]]]:
-    """The conversation in the Messages format: the system turns' words, and the rest as messages. Turns that follow
-    one another on the same side go out as one message, and an assistant turn with neither words nor calls, which
-    the format has no message for, is left out."""
+    """The conversation as Messages: system words, then same-side turns merged and empty turns dropped."""
     system = "\n\n".join(turn.text for turn in turns if turn.role == "system")
     messages: list[dict[str, Any]] = []
     for turn in turns:

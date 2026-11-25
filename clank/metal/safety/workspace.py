@@ -26,8 +26,7 @@ class Box:
         return bool(np.all(position >= self.low) and np.all(position <= self.high))
 
     def clamp(self, T_base_tcp: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.float64], bool]:
-        """The tool pose with its position moved to the nearest point inside the box, its rotation as it was; and
-        whether it had to move."""
+        """The pose with its position clamped into the box, rotation kept, and whether it moved."""
         position = T_base_tcp[:3, 3]
         inside = np.clip(position, self.low, self.high)
         if np.array_equal(inside, position):

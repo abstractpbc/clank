@@ -1,15 +1,4 @@
-"""The current plan for one arm: chunks go in as they arrive, the control loop samples it by time.
-
-A new chunk never replaces the plan in one step. From the moment it arrives it is cross-faded in from the plan in
-force over a short window, with a sigmoid weight, so the commanded pose is continuous across the seam however far the
-two plans disagree. The weight is a function of time since the seam, because the plan is indexed by time and holds
-tool poses rather than joint rows, and it is rescaled to run from exactly 1 (all old plan) at the seam to exactly 0
-at the end of the window, so there is no step at either end.
-
-Each chunk is smoothed before it is blended in: a Savitzky-Golay fit over its rows takes out the row-to-row wobble a
-model's poses carry, which straight lines between the rows would otherwise turn into a velocity step at every row. The
-fit is centred, so it adds no lag, and the gripper apertures are left as they are so that a grasp stays crisp.
-"""
+"""One arm's plan: each new chunk is smoothed, then cross-faded in from the plan in force by time."""
 
 import numpy as np
 import numpy.typing as npt
@@ -37,8 +26,7 @@ class Trajectory:
         return self._plan is not None
 
     def hold(self, T_base_tcp: npt.NDArray[np.float64], grip: float, now: float) -> None:
-        """Makes the plan "stay at this pose" for one blend window from `now`: what an arm at a standstill is
-        doing, so that the first chunk fades in from it like any other."""
+        """Makes the plan stay at this pose for one blend window from `now`, so the first chunk fades in."""
         self._plan = PoseChunk(
             t=np.array([now, now + self._blend_s]),
             T_base_tcp=np.stack([T_base_tcp, T_base_tcp]),
@@ -46,14 +34,7 @@ class Trajectory:
         )
 
     def update(self, chunk: PoseChunk, now: float) -> None:
-        """Brings `chunk` into force from `now` on; its rows already in the past are dropped.
-
-        With a plan in force, the new plan starts at `now` exactly where the old one is, and each row of the chunk
-        inside the blend window is the old plan's pose at that time moved part of the way to the row: all old at
-        `now`, all new by the end of the window. The window ends early where the old plan does. A plan in force that
-        has already run out is held at its last pose (`sample_held`), so the chunk fades in from that pose over the
-        whole window. With no plan in force the chunk is taken as it is, from the row before `now`.
-        """
+        """Brings `chunk` into force from `now`, cross-faded from the plan in force, its past rows dropped."""
         chunk = _smoothed(chunk)
         ahead = int(np.searchsorted(chunk.t, now, side="right"))  # the first row strictly after now
         if ahead == len(chunk.t):
@@ -90,8 +71,7 @@ class Trajectory:
         )
 
     def sample(self, t: float) -> tuple[npt.NDArray[np.float64], float]:
-        """The planned tool pose (4, 4) and gripper aperture at time `t`: positions and apertures interpolated
-        linearly, rotations along the shortest arc."""
+        """The planned tool pose (4, 4) and gripper aperture at time `t`."""
         plan = self._plan
         if plan is None:
             raise RuntimeError("the trajectory holds no plan yet")
@@ -100,11 +80,7 @@ class Trajectory:
         return _sample(plan, t)
 
     def sample_held(self, t: float) -> tuple[npt.NDArray[np.float64], float, float]:
-        """As sample(), except that past the plan's end it holds the plan's last pose and aperture.
-
-        Returns the pose, the aperture, and how long the plan has been over at `t`: 0 while it is not. The plan is
-        read once, so a chunk brought into force on another thread meanwhile cannot split the answer.
-        """
+        """As sample(), but holding the last pose past the plan's end; also returns how long it has been over."""
         plan = self._plan
         if plan is None:
             raise RuntimeError("the trajectory holds no plan yet")
@@ -117,8 +93,7 @@ class Trajectory:
 
 
 def _smoothed(chunk: PoseChunk) -> PoseChunk:
-    """`chunk` with its positions and rotations smoothed by a Savitzky-Golay fit over `_SMOOTH_S` of rows. Rotations
-    are fitted as rotation vectors from the chunk's first row. A chunk with too few rows to fit is taken as it is."""
+    """`chunk` with its positions and rotations smoothed by a Savitzky-Golay fit, if it has rows enough."""
     row_s = float(np.median(np.diff(chunk.t)))
     rows = len(chunk.t)
     # The fit's window has an odd number of rows, and no more than the chunk has.
@@ -145,8 +120,7 @@ def _sample(plan: PoseChunk, t: float) -> tuple[npt.NDArray[np.float64], float]:
 
 
 def _between(a: npt.NDArray[np.float64], b: npt.NDArray[np.float64], share: float) -> npt.NDArray[np.float64]:
-    """The pose `share` of the way from `a` to `b`: the position on the straight line, the rotation on the shortest
-    arc."""
+    """The pose `share` of the way from `a` to `b`, position linearly and rotation on the shortest arc."""
     pose = np.eye(4)
     rotation_a = Rotation.from_matrix(a[:3, :3])
     turn = (rotation_a.inv() * Rotation.from_matrix(b[:3, :3])).as_rotvec()

@@ -1,9 +1,4 @@
-"""OpenAI (openai.com): GPT-6.2 Astra on the Ultrafast tier, driving the arms through nerve's moves.
-
-`openai/gpt-6.2-astra` is the model. The key is read from `OPENAI_API_KEY`. Ultrafast is OpenAI's fastest service
-tier, offered on the Responses API only. It has rate limits of its own, keeps GPT-6.2 Astra's data in the US, and
-costs several times the standard rate.
-"""
+"""OpenAI: GPT-6.2 Astra on the Ultrafast tier through nerve, keyed by `OPENAI_API_KEY`."""
 
 from clank.ai.model import Model, Provider
 from clank.ai.protocols import nerve

@@ -4,8 +4,7 @@ import os
 
 
 def require_env(name: str, holds: str) -> str:
-    """The environment variable `name`, surrounding whitespace removed. RuntimeError when it is unset or blank, saying
-    what it should hold."""
+    """The environment variable `name`, stripped; RuntimeError saying what it `holds` when unset or blank."""
     value = os.environ.get(name, "").strip()
     if not value:
         raise RuntimeError(f"the environment variable {name} is not set: it holds {holds}")

@@ -25,18 +25,7 @@ class Kinematics:
         rest: Sequence[float],
         limit_tolerance_rad: float,
     ) -> None:
-        """
-        urdf: the arm's URDF; its root link is the arm's base frame.
-        joints: the joints the arm drives, in the order the kinematic chain has them; every other joint is locked
-            at its neutral position.
-        tcp_link: the link the tool centre point is fixed to.
-        tcp_offset: (x, y, z) of the tool centre point in `tcp_link`'s frame, metres.
-        tcp_rotation: the tool centre point's axes in `tcp_link`'s frame, a 3 x 3 rotation matrix; the identity keeps
-            that link's axes.
-        rest: one angle per joint, the posture the solve leans toward where the tool pose leaves it free.
-        limit_tolerance_rad: how far past a URDF joint limit a measured joint may read (an arm resting on a hard
-            stop reads slightly past it); beyond this, ik_step() refuses.
-        """
+        """Builds the arm from its URDF, driven joints in chain order, tool frame, rest posture, limit tolerance."""
         full = pin.buildModelFromUrdf(str(urdf))
         missing = [name for name in joints if not full.existJointName(name)]
         if missing:
@@ -68,19 +57,13 @@ class Kinematics:
         self._tasks = (self._tcp_task, posture)
 
     def fk(self, q: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """The tool pose (4, 4) in the arm's base frame at joints `q`. Safe to call from any thread: it works in its
-        own scratch space, since the run's observer and its control loop both ask."""
+        """The tool pose (4, 4) in the base frame at joints `q`, thread-safe."""
         data = self._model.createData()
         pin.framesForwardKinematics(self._model, data, np.asarray(q, dtype=np.float64))
         return data.oMf[self._tcp_id].homogeneous.copy()
 
     def ik_step(self, q: npt.NDArray[np.float64], T_base_tcp: npt.NDArray[np.float64], dt: float) -> npt.NDArray[np.float64]:
-        """The joints to command next: one step from `q` toward the tool pose, inside the joint limits. There is no
-        speed cap; `dt` only scales the solve.
-
-        Raises ValueError when `q` is past a joint limit by more than the tolerance, and pink's NoSolutionFound when
-        the step has no solution.
-        """
+        """One IK step from `q` toward the tool pose within joint limits, with no speed cap."""
         q = np.asarray(q, dtype=np.float64)
         low, high = self._model.lowerPositionLimit, self._model.upperPositionLimit
         outside = (q < low - self._tolerance) | (q > high + self._tolerance)

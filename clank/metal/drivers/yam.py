@@ -1,11 +1,4 @@
-"""One i2rt YAM arm with a linear 4310 gripper, powered and commanded through i2rt.
-
-Opening the arm switches its motors on, and i2rt sweeps the gripper to both hard stops to calibrate it; the arm then
-holds where it is. command() hands i2rt a position target, which its own loop tracks with its joint gains; i2rt clips
-the target to its joint limits. Nothing here limits how fast a target may change.
-
-A YAM has no brakes: close() switches the motors off and the arm goes limp, so park it first.
-"""
+"""One powered i2rt YAM arm with a linear 4310 gripper; it has no brakes and goes limp on close()."""
 
 import time
 
@@ -41,7 +34,6 @@ class YamRobot:
         self._robot.close()
 
     def _require_alive(self) -> None:
-        """Refuses once i2rt's motor loop has stopped (a motor stopped answering, as when power is cut): from then
-        on i2rt returns the last state it had and drops every target, so the arm is neither read nor driven."""
+        """Raises once i2rt's motor loop has stopped, since the arm is then neither read nor driven."""
         if not self._robot.motor_chain.running:
             raise RuntimeError(f"{self._channel}: i2rt's motor loop has stopped; the arm is no longer driven")

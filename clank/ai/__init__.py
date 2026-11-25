@@ -1,13 +1,4 @@
-"""Models by name: `create_policy("<provider id>/<model id>")` returns the model in clank's Policy slot.
-
-A protocol (`clank/ai/protocols/`) is the code that talks to one kind of service and turns its answers into pose
-chunks. A provider is a declaration: the service's name, the protocol that speaks to it, and each of its models with
-the config that protocol needs.
-
-A provider is a file (`clank/ai/providers/<provider id>.py`) or an installed distribution, which registers it under
-the `clank.providers` entry point. The files come first, so a provider that is not in the checkout, such as a
-service's own client, is installed beside clank and named the same way.
-"""
+"""Models by name: `create_policy("<provider id>/<model id>")` returns a provider file's or entry point's model."""
 
 from clank.ai import providers
 from clank.ai.model import Model, Provider
@@ -41,12 +32,7 @@ def find_model(model_ref: str) -> tuple[Provider, Model]:
 
 
 def load_provider(provider_id: str) -> Provider:
-    """Imports `clank.ai.providers.<provider_id>`, or loads the provider an installed distribution registers as
-    `provider_id` under `clank.providers`.
-
-    A provider is imported only when it is asked for, so a checkout without that provider's file, or a machine
-    without the client library its protocol needs, still imports `clank.ai` and every other provider.
-    """
+    """The provider `clank.ai.providers.<provider_id>` declares, else the one installed under `clank.providers`."""
     present = declared_names(providers)
     if provider_id in present:
         return load_declared(providers, provider_id, "provider")

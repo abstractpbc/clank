@@ -1,13 +1,4 @@
-"""One i2rt YAM arm, read over CAN without switching a motor on.
-
-Opening a YAM through i2rt powers the arm and sweeps the gripper to its hard stops to calibrate it. This driver only
-asks each Damiao motor for its state (a query frame to 0x7FF, which a disabled motor also answers), so the arm stays
-as it was found. It cannot command, and it cannot calibrate the gripper, so the aperture it reports is the one it is
-given.
-
-The joint angles are what i2rt would report on connecting now: the motor's angle, brought into (-pi, pi] by a whole
-turn (i2rt's `get_yam_robot`), with i2rt's YAM config of direction +1 and offset 0 on every joint (`yam_v1.yml`).
-"""
+"""One i2rt YAM arm read over CAN with every motor left off; it reports the aperture it is given."""
 
 import time
 
@@ -33,11 +24,7 @@ _STATUS_OK = (0x0, 0x1, 0xD)
 
 class PassiveYam:
     def __init__(self, channel: str, grip: float, reply_timeout_s: float = 0.05) -> None:
-        """
-        channel: the arm's SocketCAN interface, e.g. `can0`.
-        grip: the gripper aperture to report, 0 closed to 1 open, as a person at the arm sees it.
-        reply_timeout_s: how long each motor has to answer a query.
-        """
+        """channel is the SocketCAN interface, grip the aperture to report, reply_timeout_s each motor's wait."""
         if not 0.0 <= grip <= 1.0:
             raise ValueError(f"grip must be between 0 and 1, got {grip}")
         self._channel = channel
